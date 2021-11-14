@@ -14,8 +14,15 @@ import com.diana.beatbox.databinding.ListItemSoundBinding
 
 class BeatBoxFragment : Fragment() {
 
+    private lateinit var beatBox: BeatBox
+
     companion object {
         fun newInstance(): BeatBoxFragment = BeatBoxFragment()
+    }
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        beatBox = BeatBox(activity)
     }
 
     override fun onCreateView(
@@ -29,16 +36,23 @@ class BeatBoxFragment : Fragment() {
             false
         )
         binding.recyclerView.layoutManager = GridLayoutManager(activity, 3)
-        binding.recyclerView.adapter = SoundAdapter(activity)
+        binding.recyclerView.adapter = SoundAdapter(activity, beatBox.getSounds(),beatBox)
         return binding.root
     }
 
-    private class SoundHolder(binding: ListItemSoundBinding) :
+    private class SoundHolder(binding: ListItemSoundBinding,beatBox: BeatBox) :
         RecyclerView.ViewHolder(binding.root) {
         private val mBinding = binding
+        init {
+            mBinding.viewModel = SoundViewModel(beatBox)
+        }
+        fun bind(sound: Sound){
+            mBinding.viewModel?.sound = sound
+            mBinding.executePendingBindings()
+        }
     }
 
-    private class SoundAdapter(val activity: FragmentActivity?) :
+    private class SoundAdapter(val activity: FragmentActivity?, val sounds: MutableList<Sound>,val beatBox: BeatBox) :
         RecyclerView.Adapter<SoundHolder>() {
 
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): SoundHolder {
@@ -49,13 +63,14 @@ class BeatBoxFragment : Fragment() {
                 parent,
                 false
             )
-            return SoundHolder(binding)
+            return SoundHolder(binding,beatBox)
         }
 
         override fun onBindViewHolder(holder: SoundHolder, position: Int) {
-
+            val sound = sounds[position]
+            holder.bind(sound)
         }
 
-        override fun getItemCount(): Int = 0
+        override fun getItemCount(): Int = sounds.size
     }
 }
